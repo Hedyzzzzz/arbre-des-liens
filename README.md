@@ -99,3 +99,7 @@ Sans configuration, le site reste local. Pour que chacun crée **son** arbre ave
 4. Sur GitHub : **Settings → Secrets and variables → Actions → Variables**, créer `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`, puis relancer le déploiement.
 
 Fonctionnement : la page d’accueil propose **Créer un arbre** (nom + mot de passe) et **Explorer les arbres**. Tout le monde voit tous les arbres ; le mot de passe sert à créer ou modifier. Sauvegarde automatique, liste rafraîchie toutes les 30 s. En modification, **Importer des persos** copie des personnages (ou un arbre entier) venant des autres arbres. En **Mode Aura**, ‹ › changent d’arbre et « Auto » les fait défiler toutes les 15 s. Pour changer le mot de passe : la requête `update` en commentaire dans `setup.sql`.
+
+## Tout publier en un clic (Windows)
+
+Double-cliquer sur **TOUT-FAIRE-WINDOWS.bat** : il installe Git et GitHub CLI si besoin, te connecte a GitHub dans le navigateur, cree le depot, envoie les cles de `.env.local`, publie le code, active GitHub Pages et affiche le lien du site.

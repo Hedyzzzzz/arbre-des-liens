@@ -25,3 +25,7 @@ export const saveTree = (password: string, name: string, token: string, data: un
 
 // Le mot de passe du groupe protège les écritures ; cette valeur fixe sert seulement au serveur déjà installé.
 export const SHARED_TOKEN = 'arbre-partage';
+export const deleteTree = (password: string, name: string) =>
+  rpc('delete_tree', { p_password: password, p_name: name }).catch(error => {
+    throw new Error(String(error?.message).includes('delete_tree') ? 'Il manque l’ajout côté serveur (fichier AJOUT-SUPPRESSION.sql).' : error.message);
+  });

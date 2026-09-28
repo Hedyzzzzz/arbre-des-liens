@@ -14,6 +14,10 @@ echo [ERREUR] Le fichier .env.local est introuvable dans ce dossier.
 goto fail
 :env_ok
 
+echo Mise a jour de la base Supabase...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0outils\appliquer-sql.ps1" -Root "%CD%"
+echo.
+
 rem --- 1. Installer Git et GitHub CLI si besoin
 where git >nul 2>nul
 if not errorlevel 1 goto git_ok
@@ -88,7 +92,7 @@ for /f "usebackq tokens=1,* delims==" %%a in (".env.local") do gh variable set %
 
 rem --- 6. Envoyer le code
 echo Envoi du code sur GitHub...
-git push -u origin main
+git push -u origin main --force
 if errorlevel 1 goto fail
 
 rem --- 7. Activer le site et lancer sa construction

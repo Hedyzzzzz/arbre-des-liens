@@ -61,8 +61,8 @@ import { familyEdgeTypes } from "./FamilyEdge";
 import { RelationDialog } from "./RelationDialog";
 import { RELATION_STYLES, getRelationColor, validateRelation, type RelationKind, type RelationColors } from "./relations";
 import { EditorAccessDialog } from "./EditorAccessDialog";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { cloudEnabled, listTrees, saveTree, unlockTree, SHARED_TOKEN, type CloudTree } from "./cloud";
+import { ChevronLeft, ChevronRight, Pause, Play, Trash2 as TrashIcon } from "lucide-react";
+import { cloudEnabled, deleteTree, listTrees, saveTree, unlockTree, SHARED_TOKEN, type CloudTree } from "./cloud";
 import { Home, Explore } from "./Home";
 import { ImportDialog } from "./ImportDialog";
 import { ACCESS_KEY } from "./editorAccess";
@@ -126,6 +126,7 @@ type CloudProps = {
   onUnlock: (password?: string) => Promise<void>;
   onLock: () => void;
   onHome: () => void;
+  onDelete: () => Promise<void>;
 };
 
 type AddPreset = {
@@ -1886,6 +1887,7 @@ function Dashboard({
             <span>{canEdit ? (cloud ? "Terminer" : "Édition · Verrouiller") : cloud ? "Modifier cet arbre" : "Lecture seule · Déverrouiller"}</span>
           </button>
           {canEdit && cloud && <button className="mode-button" onClick={() => setImportOpen(true)}><span>Importer des persos</span></button>}
+          {canEdit && cloud && <button className="mode-button danger" aria-label="Supprimer cet arbre" onClick={() => { if (window.confirm(`Supprimer définitivement l’arbre « ${cloud.current} » ?`)) cloud.onDelete().catch(error => showToast(error instanceof Error ? error.message : "Erreur")); }}><TrashIcon size={16}/><span>Supprimer</span></button>}
           {canEdit && <button
             className="primary-button compact"
             onClick={() => {
@@ -2296,7 +2298,7 @@ export default function App() {
     if (showLanding) return <Landing onCreate={() => { setState(c => ({ ...c, started: true })); setShowLanding(false); }} onExplore={() => { setState(c => ({ ...c, started: true })); setShowLanding(false); }} />;
     return <ReactFlowProvider><Dashboard state={state} setState={setState} onBackToLanding={() => setShowLanding(true)} /></ReactFlowProvider>;
   }
-  if (screen === "home") return <Home count={trees.length} onCreate={createTree} onExplore={() => setScreen("explore")} />;
+  if (screen === "home") return <Home trees={trees} onOpen={selectTree} onCreate={createTree} onExplore={() => setScreen("explore")} />;
   if (screen === "explore") return <Explore trees={trees} loaded={loaded} onOpen={selectTree} onBack={() => setScreen("home")} />;
 
   const cloud: CloudProps = {
@@ -2312,6 +2314,13 @@ export default function App() {
     },
     onLock: () => { flush(); setWorking(null); },
     onHome: () => { flush(); setWorking(null); setScreen("home"); },
+    onDelete: async () => {
+      if (!password || !current) return;
+      const name = current;
+      dirty.current = false; setWorking(null);
+      try { await deleteTree(password, name); } finally { void refresh(); }
+      setCurrent(undefined); setScreen("explore");
+    },
     onUnlock: async pw => {
       const secret = pw ?? password;
       if (!secret || !current) throw new Error("Mot de passe manquant.");

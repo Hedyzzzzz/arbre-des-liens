@@ -2824,3 +2824,23 @@ button:disabled {
 .import-group { margin-top: 14px; } .import-group header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
 .import-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px solid rgba(255, 255, 255, .08); }
 .import-row button, .import-all { cursor: pointer; padding: 5px 12px; border-radius: 999px; color: #ffc974; background: none; border: 1px solid rgba(255, 201, 116, .4); }
+
+/* Accueil v2 */
+.home { background: radial-gradient(ellipse 80% 55% at 50% 38%, rgba(255, 201, 116, .13) 0%, transparent 70%), radial-gradient(ellipse at 50% 0%, #20264a 0%, #0b1020 55%, #060912 100%); }
+.home > * { position: relative; z-index: 1; }
+.home-stars { position: absolute !important; inset: 0; z-index: 0 !important; pointer-events: none; }
+.home-stars i { position: absolute; border-radius: 50%; background: #f1e5d0; opacity: .15; animation: home-twinkle 5s ease-in-out infinite; }
+@keyframes home-twinkle { 0%, 100% { opacity: .1; } 50% { opacity: .85; } }
+.home-tree { width: min(430px, 82vw); height: auto; margin-bottom: -6px; animation: home-float 7s ease-in-out infinite; }
+@keyframes home-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.home-node rect:first-child { fill: rgba(255, 201, 116, .1); stroke: #ffc974; stroke-width: 1.4; animation: home-pulse 4s ease-in-out infinite; animation-delay: inherit; }
+.home-node circle { fill: #ffe3a3; } .home-node rect:last-child { fill: #ffc974; opacity: .7; }
+@keyframes home-pulse { 0%, 100% { fill: rgba(255, 201, 116, .08); } 50% { fill: rgba(255, 201, 116, .32); } }
+.home h1 { background: linear-gradient(180deg, #fff3d1 10%, #ffc974 90%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 0 22px rgba(255, 201, 116, .35)); letter-spacing: .01em; }
+.home-eyebrow { letter-spacing: .6em; opacity: .9; }
+.home-button { backdrop-filter: blur(6px); } .home-button.primary { box-shadow: 0 0 34px rgba(255, 201, 116, .38); }
+.home-recent { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 10px; max-width: 640px; }
+.home-recent span { color: #8d897f; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin-right: 6px; }
+.home-recent button { cursor: pointer; padding: 6px 14px; border-radius: 999px; color: #f1e5d0; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 201, 116, .25); }
+.home-recent button:hover { border-color: #ffc974; box-shadow: 0 0 16px rgba(255, 201, 116, .3); }
+.mode-button.danger { color: #ff8f8f; border-color: rgba(255, 120, 120, .4); }

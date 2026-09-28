@@ -62,3 +62,14 @@ end $$;
 
 grant execute on function public.unlock_tree(text, text, text) to anon;
 grant execute on function public.save_tree(text, text, text, jsonb) to anon;
+
+-- Suppression d'un arbre (mot de passe du groupe requis).
+create or replace function public.delete_tree(p_password text, p_name text)
+returns void language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not exists (select 1 from settings where id = 1 and password_hash = crypt(p_password, password_hash)) then
+    raise exception 'Mot de passe incorrect.';
+  end if;
+  delete from trees where name = p_name;
+end $$;
+grant execute on function public.delete_tree(text, text) to anon;

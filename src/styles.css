@@ -2850,3 +2850,37 @@ button:disabled {
 .tree-card-wrap .tree-card { flex: 1; }
 .tree-delete { margin-top: 6px; cursor: pointer; padding: 6px; border-radius: 10px; color: #ff8f8f; background: none; border: 1px solid rgba(255, 120, 120, .3); font-size: 13px; }
 .tree-delete:hover { background: rgba(255, 120, 120, .12); }
+
+/* Accueil dans le style de l'arbre */
+.lin-home { --tree-gold: #d9b888; position: fixed; inset: 0; z-index: 1; overflow: hidden; display: flex; flex-direction: column; align-items: center; color: #f1e8dc; background: #0a0d13; font-family: Manrope, Inter, system-ui, sans-serif; }
+.lin-home::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 32%; pointer-events: none; background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(217, 184, 136, .12), transparent 70%); }
+.lin-home > .celestial-sky { z-index: 0; }
+.lin-head { position: relative; z-index: 2; text-align: center; padding: clamp(40px, 8vh, 84px) 22px 0; }
+.lin-eyebrow { margin: 0 0 14px; letter-spacing: .55em; font-size: 12px; color: #d9b888; }
+.lin-head h1, .lin-page h1 { margin: 0; font: 500 clamp(38px, 6.5vw, 76px) Georgia, 'Times New Roman', serif; color: #f1e8dc; letter-spacing: .01em; }
+.lin-sub { max-width: 520px; margin: 14px auto 0; color: #b3afa6; line-height: 1.55; font-size: 16px; }
+.lin-orn { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; }
+.lin-orn span { width: 64px; height: 1px; background: linear-gradient(90deg, transparent, #d9b888); } .lin-orn span:last-child { transform: scaleX(-1); }
+.lin-orn i { width: 8px; height: 8px; border: 1px solid #d9b888; transform: rotate(45deg); }
+.lin-tree { position: relative; z-index: 1; flex: 1; min-height: 0; width: 100%; }
+.lin-tree svg { display: block; width: 100%; height: 100%; }
+.lin-card rect { fill: #101218; stroke: rgba(217, 184, 136, .6); stroke-width: 1; transition: stroke .15s, fill .15s; }
+.lin-card { cursor: pointer; outline: none; } .lin-card:hover rect, .lin-card:focus rect { stroke: #f0d7b2; fill: #171a22; }
+.lin-card-name { font: 500 20px Georgia, serif; fill: #f1e8dc; } .lin-card-sub { font: 12px Manrope, sans-serif; fill: #b3afa6; }
+.lin-card-empty { fill: none; stroke: rgba(217, 184, 136, .22); stroke-dasharray: 4 5; }
+.lin-actions { position: absolute; z-index: 3; bottom: clamp(18px, 5vh, 42px); left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; width: min(720px, 94vw); }
+.lin-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; font: 600 16px Manrope, sans-serif; border-radius: 10px; cursor: pointer; color: #e7d2b4; background: #1a1c22; border: 1px solid #77674f; transition: border-color .15s, box-shadow .15s; }
+.lin-btn:hover { border-color: #d9b888; box-shadow: 0 0 24px rgba(217, 184, 136, .25); }
+.lin-btn.primary { color: #221b13; background: #dec298; border-color: #dec298; } .lin-btn.primary:hover { background: #efd6b4; }
+.lin-btn em { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(217, 184, 136, .18); }
+.lin-explore { display: block; overflow: auto; }
+.lin-explore > .celestial-sky { position: fixed; }
+.lin-page { position: relative; z-index: 2; max-width: 1000px; margin: 0 auto; padding: 64px 20px 90px; text-align: center; }
+.lin-back { position: absolute; top: 22px; left: 20px; background: none; border: 0; color: #d9b888; font: 600 15px Manrope, sans-serif; cursor: pointer; }
+.lin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 34px; }
+.lin-tile { display: flex; flex-direction: column; gap: 6px; }
+.lin-tile-main { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1; padding: 20px; text-align: left; cursor: pointer; color: #f1e8dc; background: #101218; border: 1px solid rgba(217, 184, 136, .3); border-radius: 10px; transition: border-color .15s, box-shadow .15s; }
+.lin-tile-main:hover { border-color: #d9b888; box-shadow: 0 0 24px rgba(217, 184, 136, .2); }
+.lin-tile-main strong { font: 500 21px Georgia, serif; } .lin-tile-main span { color: #d9b888; font-size: 14px; } .lin-tile-main small { color: #8d897f; }
+.lin-tile-delete { padding: 7px; cursor: pointer; color: #ff8f8f; font-size: 13px; background: none; border: 1px solid rgba(255, 120, 120, .3); border-radius: 8px; } .lin-tile-delete:hover { background: rgba(255, 120, 120, .12); }
+.home-version { z-index: 5; }

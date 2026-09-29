@@ -14,6 +14,24 @@ echo [ERREUR] Le fichier .env.local est introuvable dans ce dossier.
 goto fail
 :env_ok
 
+if exist "%USERPROFILE%\.arbre-serveur-v3" goto serveur_ok
+echo.
+echo ===== ETAPE UNIQUE : CONFIGURER LE SERVEUR =====
+echo Le code a coller vient d'etre COPIE automatiquement.
+echo Une page Supabase va s'ouvrir, puis :
+echo    1) clique dans la grande zone de texte
+echo    2) colle avec Ctrl+V
+echo    3) clique sur le bouton vert RUN (en bas a droite)
+echo    4) attends de voir Success, puis reviens ici
+echo.
+(type "supabase\setup.sql" & type "supabase\mot-de-passe.local") | clip
+set REF=
+for /f "tokens=2 delims=/" %%u in ('findstr /b "VITE_SUPABASE_URL" .env.local') do for /f "delims=." %%r in ("%%u") do set REF=%%r
+start "" "https://supabase.com/dashboard/project/%REF%/sql/new"
+pause
+echo ok> "%USERPROFILE%\.arbre-serveur-v3"
+:serveur_ok
+
 
 rem --- 1. Installer Git et GitHub CLI si besoin
 where git >nul 2>nul

@@ -1612,6 +1612,8 @@ function Dashboard({
   useEffect(() => { cycleRef.current = cloud?.onCycle; });
   useEffect(() => { setSelectedId(undefined); setFocusId(undefined); setContext(null); setDrawerOpen(false); }, [cloud?.current]);
   const [importOpen, setImportOpen] = useState(false);
+  // Sans mot de passe, on entre directement en mode Aura plein ecran.
+  useEffect(() => { if (cloud && !cloud.hasPassword && !cloud.editing) void enterAura(); }, []);
   useEffect(() => { if (cloud && !cloud.editing) lockEditor(); }, [cloud?.editing]);
   const beginEdit = async (password?: string) => {
     if (cloud) await cloud.onUnlock(password);

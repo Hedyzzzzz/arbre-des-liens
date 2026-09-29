@@ -1,8 +1,64 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Compass, Sparkles, X } from 'lucide-react';
 import type { CloudTree } from './cloud';
+import { CelestialSky } from './WorldTree';
+import { curvePath, curvePoint, seededRandom, type Point } from './treeGeometry';
 
-const NODES: [number, number][] = [[90, 120], [315, 105], [150, 55], [255, 50], [200, 30], [45, 150], [360, 160]];
+const ROOT: Point = { x: 500, y: 650 };
+const ANCHORS: Point[] = [{ x: 130, y: 310 }, { x: 305, y: 185 }, { x: 500, y: 115 }, { x: 695, y: 185 }, { x: 870, y: 310 }];
+const SLOT = [2, 1, 3, 0, 4]; // le plus recent au centre
+const CARD_W = 172, CARD_H = 62;
+
+// Meme dessin que l'arbre de l'appli : branches fines dorees, ramilles, etincelles, cartes au bout.
+function HomeTree({ trees, onOpen }: { trees: CloudTree[]; onOpen: (name: string) => void }) {
+  const scene = useMemo(() => {
+    const random = seededRandom('lineage-home-tree');
+    const twigs: { d: string; w: number; o: number }[] = [];
+    const sparks: { x: number; y: number; r: number; o: number }[] = [];
+    const limbs: string[] = [];
+    const fork = (s: Point, angle: number, length: number, depth: number) => {
+      const tip = { x: s.x + Math.cos(angle) * length, y: s.y + Math.sin(angle) * length };
+      const c = { x: s.x + Math.cos(angle + .22) * length * .55, y: s.y + Math.sin(angle + .22) * length * .55 };
+      twigs.push({ d: `M${s.x},${s.y} Q${c.x},${c.y} ${tip.x},${tip.y}`, w: depth * .45 + .25, o: .3 + depth * .12 });
+      if (depth > 0) { fork(tip, angle - .25 - random() * .35, length * .6, depth - 1); fork(tip, angle + .2 + random() * .45, length * .64, depth - 1); }
+      else for (let j = 0; j < 2; j++) sparks.push({ x: tip.x + (random() - .5) * 20, y: tip.y + (random() - .5) * 16, r: .6 + random() * 1.4, o: .2 + random() * .5 });
+    };
+    for (const a of ANCHORS) {
+      const end = { x: a.x, y: a.y + CARD_H / 2 + 3 };
+      const dir = Math.sign(a.x - ROOT.x);
+      const bend = Math.max(60, Math.abs(a.x - ROOT.x) * .35);
+      const curve: [Point, Point, Point, Point] = [ROOT, { x: ROOT.x + dir * 30, y: ROOT.y - (ROOT.y - end.y) * .6 }, { x: end.x - dir * bend, y: end.y + 130 }, end];
+      limbs.push(curvePath(curve));
+      for (let s = 0; s < 4; s++) {
+        const shift = (s - 1.5) * 4;
+        twigs.push({ d: curvePath([{ x: ROOT.x + shift, y: ROOT.y }, { x: curve[1].x + shift * 3, y: curve[1].y + random() * 40 }, { x: curve[2].x + shift, y: curve[2].y }, end]), w: .6 + random() * .8, o: .35 + random() * .4 });
+      }
+      for (let i = 0; i < 6; i++) fork(curvePoint(curve, .3 + (i / 6) * .62), -Math.PI / 2 + (i % 2 ? 1 : -1) * (.5 + random() * .8), 22 + random() * 34, 3);
+    }
+    return { twigs, sparks, limbs };
+  }, []);
+  const recent = [...trees].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  return <svg viewBox="0 0 1000 660" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Les arbres">
+    <g fill="none" stroke="#d9b888" strokeLinecap="round">
+      {scene.limbs.map((d, i) => <path key={i} d={d} strokeWidth="3" opacity=".5"/>)}
+      {scene.twigs.map((t, i) => <path key={i} d={t.d} strokeWidth={t.w} opacity={t.o}/>)}
+    </g>
+    {scene.sparks.map((s, i) => <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#f1e5d0" opacity={s.o}/>)}
+    {ANCHORS.map((a, i) => {
+      const tree = recent[SLOT.indexOf(i)];
+      const x = a.x - CARD_W / 2, y = a.y - CARD_H / 2;
+      if (!tree) return <rect key={i} className="lin-card-empty" x={x} y={y} width={CARD_W} height={CARD_H} rx="6"/>;
+      const label = tree.name.length > 16 ? `${tree.name.slice(0, 15)}…` : tree.name;
+      return <g key={i} className="lin-card" role="button" tabIndex={0} onClick={() => onOpen(tree.name)} onKeyDown={e => { if (e.key === 'Enter') onOpen(tree.name); }}>
+        <rect x={x} y={y} width={CARD_W} height={CARD_H} rx="6"/>
+        <text x={a.x} y={a.y - 1} textAnchor="middle" className="lin-card-name">{label}</text>
+        <text x={a.x} y={a.y + 19} textAnchor="middle" className="lin-card-sub">{tree.data?.persons?.length ?? 0} personnage(s)</text>
+      </g>;
+    })}
+  </svg>;
+}
+
+function Ornament() { return <div className="lin-orn" aria-hidden="true"><span/><i/><span/></div>; }
 
 export function Home({ trees, onCreate, onExplore, onOpen }: { trees: CloudTree[]; onCreate: (name: string, password: string) => Promise<void>; onExplore: () => void; onOpen: (name: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -10,44 +66,24 @@ export function Home({ trees, onCreate, onExplore, onOpen }: { trees: CloudTree[
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const stars = useMemo(() => Array.from({ length: 70 }, () => ({ left: Math.random() * 100, top: Math.random() * 100, size: 1 + Math.random() * 2, delay: Math.random() * 6 })), []);
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError('');
     try { await onCreate(name.trim(), password); }
     catch (e) { setError(e instanceof Error ? e.message : 'Impossible de créer l’arbre.'); setBusy(false); }
   };
-  return <main className="home">
-    <div className="home-stars" aria-hidden="true">{stars.map((s, i) => <i key={i} style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, animationDelay: `${s.delay}s` }}/>)}</div>
-    <svg className="home-tree" viewBox="0 0 400 270" aria-hidden="true">
-      <defs>
-        <linearGradient id="home-gold" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#a8741f"/><stop offset="1" stopColor="#ffe3a3"/></linearGradient>
-        <filter id="home-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <g fill="none" stroke="url(#home-gold)" strokeLinecap="round" filter="url(#home-glow)">
-        <path d="M200 262 C200 210 194 175 200 125" strokeWidth="7"/>
-        <path d="M200 200 C160 185 120 170 90 120" strokeWidth="3.5"/>
-        <path d="M200 185 C240 170 285 150 315 105" strokeWidth="3.5"/>
-        <path d="M198 150 C186 115 170 85 150 55" strokeWidth="3"/>
-        <path d="M201 140 C215 110 235 85 255 50" strokeWidth="3"/>
-        <path d="M200 125 C200 100 200 65 200 30" strokeWidth="3"/>
-        <path d="M120 152 C95 156 70 158 45 150" strokeWidth="2.5"/>
-        <path d="M270 158 C300 168 335 170 360 160" strokeWidth="2.5"/>
-        <path d="M190 262 C150 262 120 268 80 268 M210 262 C250 262 280 268 320 268" strokeWidth="2.5"/>
-      </g>
-      {NODES.map(([x, y], i) => <g key={i} className="home-node" style={{ animationDelay: `${i * .7}s` }}>
-        <rect x={x - 17} y={y - 12} width="34" height="24" rx="7"/><circle cx={x} cy={y - 3} r="4.5"/><rect x={x - 9} y={y + 4} width="18" height="3" rx="1.5"/>
-      </g>)}
-    </svg>
-    <p className="home-eyebrow">LINEAGE</p>
-    <h1>L’Arbre des liens</h1>
-    <p className="home-sub">Dessine ta famille, ton clan, ton monde.<br/>Tout le monde peut voir les arbres des autres.</p>
-    <div className="home-actions">
-      <button className="home-button primary" onClick={() => setOpen(true)}><Sparkles size={20}/>Créer un arbre</button>
-      <button className="home-button" onClick={onExplore}><Compass size={20}/>Explorer les arbres{trees.length > 0 && <em>{trees.length}</em>}</button>
+  return <main className="lin-home">
+    <CelestialSky />
+    <header className="lin-head">
+      <p className="lin-eyebrow">LINEAGE</p>
+      <h1>L’Arbre des liens</h1>
+      <Ornament />
+      <p className="lin-sub">Dessine ta famille, ton clan, ton monde. Tout le monde peut voir les arbres des autres.</p>
+    </header>
+    <div className="lin-tree"><HomeTree trees={trees} onOpen={onOpen} /></div>
+    <div className="lin-actions">
+      <button className="lin-btn primary" onClick={() => setOpen(true)}><Sparkles size={18}/>Créer un arbre</button>
+      <button className="lin-btn" onClick={onExplore}><Compass size={18}/>Explorer les arbres{trees.length > 0 && <em>{trees.length}</em>}</button>
     </div>
-    {trees.length > 0 && <div className="home-recent"><span>Arbres récents</span>
-      {[...trees].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 6).map(tree => <button key={tree.name} onClick={() => onOpen(tree.name)}>{tree.name}</button>)}
-    </div>}
     <small className="home-version">version du {__BUILD__}</small>
     {open && <div className="access-overlay" onClick={event => { if (event.target === event.currentTarget && !busy) setOpen(false); }}>
       <div className="access-dialog" role="dialog" aria-modal="true">
@@ -77,18 +113,23 @@ export function Explore({ trees, loaded, onOpen, onDelete, onBack }: { trees: Cl
     try { await onDelete(target, password); close(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Suppression impossible.'); setBusy(false); }
   };
-  return <main className="home explore">
-    <button className="home-back" onClick={onBack}>← Accueil</button>
-    <h1>Les arbres</h1>
-    {!loaded ? <p className="home-sub">Chargement…</p>
-      : trees.length === 0 ? <p className="home-sub">Aucun arbre pour l’instant. Crée le premier !</p>
-      : <div className="tree-grid">{trees.map(tree => <div key={tree.name} className="tree-card-wrap">
-        <button className="tree-card" onClick={() => onOpen(tree.name)}>
-          <strong>{tree.name}</strong><span>{tree.data?.persons?.length ?? 0} personnage(s)</span>
-          <small>modifié le {new Date(tree.updated_at).toLocaleDateString('fr-FR')}</small>
-        </button>
-        <button className="tree-delete" aria-label={`Supprimer ${tree.name}`} onClick={() => setTarget(tree.name)}>Supprimer</button>
-      </div>)}</div>}
+  return <main className="lin-home lin-explore">
+    <CelestialSky />
+    <div className="lin-page">
+      <button className="lin-back" onClick={onBack}>← Accueil</button>
+      <p className="lin-eyebrow">LINEAGE</p>
+      <h1>Les arbres</h1>
+      <Ornament />
+      {!loaded ? <p className="lin-sub">Chargement…</p>
+        : trees.length === 0 ? <p className="lin-sub">Aucun arbre pour l’instant. Crée le premier !</p>
+        : <div className="lin-grid">{trees.map(tree => <div key={tree.name} className="lin-tile">
+          <button className="lin-tile-main" onClick={() => onOpen(tree.name)}>
+            <strong>{tree.name}</strong><span>{tree.data?.persons?.length ?? 0} personnage(s)</span>
+            <small>modifié le {new Date(tree.updated_at).toLocaleDateString('fr-FR')}</small>
+          </button>
+          <button className="lin-tile-delete" aria-label={`Supprimer ${tree.name}`} onClick={() => setTarget(tree.name)}>Supprimer</button>
+        </div>)}</div>}
+    </div>
     {target && <div className="access-overlay" onClick={event => { if (event.target === event.currentTarget && !busy) close(); }}>
       <div className="access-dialog" role="dialog" aria-modal="true">
         <button className="icon-button access-close" aria-label="Fermer" onClick={close}><X size={19}/></button>

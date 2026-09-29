@@ -48,6 +48,7 @@ export function Home({ trees, onCreate, onExplore, onOpen }: { trees: CloudTree[
     {trees.length > 0 && <div className="home-recent"><span>Arbres récents</span>
       {[...trees].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 6).map(tree => <button key={tree.name} onClick={() => onOpen(tree.name)}>{tree.name}</button>)}
     </div>}
+    <small className="home-version">version du {__BUILD__}</small>
     {open && <div className="access-overlay" onClick={event => { if (event.target === event.currentTarget && !busy) setOpen(false); }}>
       <div className="access-dialog" role="dialog" aria-modal="true">
         <button className="icon-button access-close" aria-label="Fermer" onClick={() => setOpen(false)}><X size={19}/></button>
@@ -65,15 +66,41 @@ export function Home({ trees, onCreate, onExplore, onOpen }: { trees: CloudTree[
   </main>;
 }
 
-export function Explore({ trees, loaded, onOpen, onBack }: { trees: CloudTree[]; loaded: boolean; onOpen: (name: string) => void; onBack: () => void }) {
+export function Explore({ trees, loaded, onOpen, onDelete, onBack }: { trees: CloudTree[]; loaded: boolean; onOpen: (name: string) => void; onDelete: (name: string, password: string) => Promise<void>; onBack: () => void }) {
+  const [target, setTarget] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const close = () => { setTarget(null); setPassword(''); setError(''); setBusy(false); };
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); if (!target) return; setBusy(true); setError('');
+    try { await onDelete(target, password); close(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Suppression impossible.'); setBusy(false); }
+  };
   return <main className="home explore">
     <button className="home-back" onClick={onBack}>← Accueil</button>
     <h1>Les arbres</h1>
     {!loaded ? <p className="home-sub">Chargement…</p>
       : trees.length === 0 ? <p className="home-sub">Aucun arbre pour l’instant. Crée le premier !</p>
-      : <div className="tree-grid">{trees.map(tree => <button key={tree.name} className="tree-card" onClick={() => onOpen(tree.name)}>
-        <strong>{tree.name}</strong><span>{tree.data?.persons?.length ?? 0} personnage(s)</span>
-        <small>modifié le {new Date(tree.updated_at).toLocaleDateString('fr-FR')}</small>
-      </button>)}</div>}
+      : <div className="tree-grid">{trees.map(tree => <div key={tree.name} className="tree-card-wrap">
+        <button className="tree-card" onClick={() => onOpen(tree.name)}>
+          <strong>{tree.name}</strong><span>{tree.data?.persons?.length ?? 0} personnage(s)</span>
+          <small>modifié le {new Date(tree.updated_at).toLocaleDateString('fr-FR')}</small>
+        </button>
+        <button className="tree-delete" aria-label={`Supprimer ${tree.name}`} onClick={() => setTarget(tree.name)}>Supprimer</button>
+      </div>)}</div>}
+    {target && <div className="access-overlay" onClick={event => { if (event.target === event.currentTarget && !busy) close(); }}>
+      <div className="access-dialog" role="dialog" aria-modal="true">
+        <button className="icon-button access-close" aria-label="Fermer" onClick={close}><X size={19}/></button>
+        <div className="eyebrow">Suppression</div>
+        <h2>Supprimer « {target} » ?</h2>
+        <p>L’arbre sera effacé pour tout le monde. Entre le mot de passe pour confirmer.</p>
+        <form onSubmit={submit}>
+          <label className="field"><span>Mot de passe</span><input autoFocus type="password" required value={password} disabled={busy} onChange={e => setPassword(e.target.value)}/></label>
+          {error && <p className="access-error" role="alert">{error}</p>}
+          <button className="primary-button" disabled={busy}>{busy ? 'Suppression…' : 'Supprimer définitivement'}</button>
+        </form>
+      </div>
+    </div>}
   </main>;
 }

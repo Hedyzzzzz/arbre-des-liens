@@ -14,9 +14,6 @@ echo [ERREUR] Le fichier .env.local est introuvable dans ce dossier.
 goto fail
 :env_ok
 
-echo Mise a jour de la base Supabase...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0outils\appliquer-sql.ps1" -Root "%CD%"
-echo.
 
 rem --- 1. Installer Git et GitHub CLI si besoin
 where git >nul 2>nul
@@ -115,7 +112,8 @@ echo.
 echo ===== TERMINE ! =====
 echo Ton site : %URL%
 echo Donne ce lien a tes amis, avec le mot de passe.
-start "" "%URL%"
+echo (En bas a droite de l accueil, la ligne "version du ..." doit etre celle d aujourd hui.)
+start "" "%URL%?v=%RANDOM%"
 pause
 exit /b 0
 

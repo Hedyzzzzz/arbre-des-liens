@@ -62,7 +62,7 @@ import { RelationDialog } from "./RelationDialog";
 import { RELATION_STYLES, getRelationColor, validateRelation, type RelationKind, type RelationColors } from "./relations";
 import { EditorAccessDialog } from "./EditorAccessDialog";
 import { ChevronLeft, ChevronRight, Pause, Play, Trash2 as TrashIcon } from "lucide-react";
-import { cloudEnabled, deleteTree, listTrees, saveTree, unlockTree, SHARED_TOKEN, type CloudTree } from "./cloud";
+import { cloudEnabled, listTrees, saveTree, unlockTree, SHARED_TOKEN, type CloudTree } from "./cloud";
 import { Home, Explore } from "./Home";
 import { ImportDialog } from "./ImportDialog";
 import { ACCESS_KEY } from "./editorAccess";
@@ -2245,7 +2245,7 @@ export default function App() {
     try {
       const next = await listTrees();
       // On garde les anciens objets si rien n'a changé : le cadrage ne bouge pas.
-      setTrees(prev => next.map(tree => prev.find(old => old.name === tree.name && old.updated_at === tree.updated_at) ?? tree));
+      setTrees(prev => next.filter(tree => !tree.data?.deleted).map(tree => prev.find(old => old.name === tree.name && old.updated_at === tree.updated_at) ?? tree));
     } catch { /* hors ligne : on garde la liste actuelle */ }
     setLoaded(true);
   }, []);
@@ -2279,11 +2279,21 @@ export default function App() {
   };
 
   const createTree = async (name: string, pw: string) => {
-    if ((await unlockTree(pw, name, SHARED_TOKEN)) === "mine") throw new Error("Ce nom d’arbre existe déjà, choisis-en un autre.");
+    const result = await unlockTree(pw, name, SHARED_TOKEN);
+    if (result === "mine" && trees.some(tree => tree.name === name)) throw new Error("Ce nom d’arbre existe déjà, choisis-en un autre.");
     const empty: PersistedState = { ...initialState, started: true };
     await saveTree(pw, name, SHARED_TOKEN, empty);
     dirty.current = false;
     setPassword(pw); setCurrent(name); setWorking(empty); setStatus("Enregistré en ligne"); setScreen("tree");
+    void refresh();
+  };
+
+  // Suppression : l'arbre est vidé (données effacées) puis masqué de la liste. Le mot de passe est vérifié par le serveur.
+  const removeTree = async (name: string, pw: string) => {
+    await saveTree(pw, name, SHARED_TOKEN, { deleted: true });
+    dirty.current = false;
+    if (name === current) { setWorking(null); setCurrent(undefined); }
+    setTrees(prev => prev.filter(tree => tree.name !== name));
     void refresh();
   };
 
@@ -2299,7 +2309,7 @@ export default function App() {
     return <ReactFlowProvider><Dashboard state={state} setState={setState} onBackToLanding={() => setShowLanding(true)} /></ReactFlowProvider>;
   }
   if (screen === "home") return <Home trees={trees} onOpen={selectTree} onCreate={createTree} onExplore={() => setScreen("explore")} />;
-  if (screen === "explore") return <Explore trees={trees} loaded={loaded} onOpen={selectTree} onBack={() => setScreen("home")} />;
+  if (screen === "explore") return <Explore trees={trees} loaded={loaded} onOpen={selectTree} onDelete={removeTree} onBack={() => setScreen("home")} />;
 
   const cloud: CloudProps = {
     names, current, status, editing: working !== null, hasPassword: Boolean(password),
@@ -2316,10 +2326,8 @@ export default function App() {
     onHome: () => { flush(); setWorking(null); setScreen("home"); },
     onDelete: async () => {
       if (!password || !current) return;
-      const name = current;
-      dirty.current = false; setWorking(null);
-      try { await deleteTree(password, name); } finally { void refresh(); }
-      setCurrent(undefined); setScreen("explore");
+      await removeTree(current, password);
+      setScreen("explore");
     },
     onUnlock: async pw => {
       const secret = pw ?? password;

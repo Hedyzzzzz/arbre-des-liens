@@ -2844,3 +2844,9 @@ button:disabled {
 .home-recent button { cursor: pointer; padding: 6px 14px; border-radius: 999px; color: #f1e5d0; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 201, 116, .25); }
 .home-recent button:hover { border-color: #ffc974; box-shadow: 0 0 16px rgba(255, 201, 116, .3); }
 .mode-button.danger { color: #ff8f8f; border-color: rgba(255, 120, 120, .4); }
+
+.home-version { position: fixed; bottom: 10px; right: 14px; color: #6f6b62; font-size: 11px; z-index: 2; }
+.tree-card-wrap { position: relative; display: flex; flex-direction: column; }
+.tree-card-wrap .tree-card { flex: 1; }
+.tree-delete { margin-top: 6px; cursor: pointer; padding: 6px; border-radius: 10px; color: #ff8f8f; background: none; border: 1px solid rgba(255, 120, 120, .3); font-size: 13px; }
+.tree-delete:hover { background: rgba(255, 120, 120, .12); }

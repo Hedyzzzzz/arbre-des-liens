@@ -104,6 +104,4 @@ Fonctionnement : la page d’accueil propose **Créer un arbre** (nom + mot de p
 
 Double-cliquer sur **TOUT-FAIRE-WINDOWS.bat** : il installe Git et GitHub CLI si besoin, te connecte a GitHub dans le navigateur, cree le depot, envoie les cles de `.env.local`, publie le code, active GitHub Pages et affiche le lien du site.
 
-**Supprimer un arbre :** en modification, bouton **Supprimer** (mot de passe requis). Il faut avoir exécuté une fois `supabase/AJOUT-SUPPRESSION.sql` dans le SQL Editor de Supabase.
-
-Le script TOUT-FAIRE-WINDOWS.bat applique aussi supabase/setup.sql a chaque lancement (jeton Supabase demande une seule fois, garde hors du projet dans le dossier utilisateur).
+**Supprimer un arbre :** bouton **Supprimer** sur chaque carte de la liste (ou en modification). Mot de passe requis, aucune configuration supplementaire.

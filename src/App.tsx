@@ -67,7 +67,7 @@ import { Home, Explore } from "./Home";
 import { ImportDialog } from "./ImportDialog";
 import { ACCESS_KEY } from "./editorAccess";
 import { CelestialSky, WorldTree } from "./WorldTree";
-import { CARD_HEIGHT, getGenerations, layoutTree, sceneBounds, type Bounds } from "./treeGeometry";
+import { CARD_HEIGHT, getGenerations, layoutTree, sceneBounds, type Bounds, type Point as TreePoint } from "./treeGeometry";
 
 type SkinType = "upload" | "username" | "url" | "placeholder";
 type RelationType = "parent" | "sibling" | "partner";
@@ -112,6 +112,7 @@ type PersistedState = {
   persons: Person[];
   relations: Relation[];
   primaryPersonId?: string;
+  moved?: Record<string, TreePoint>; // cases déplacées à la main (position absolue)
 };
 
 type CloudProps = {
@@ -1658,8 +1659,19 @@ function Dashboard({
     });
   };
 
-  const positions = useMemo(() => layoutTree(state.persons, state.relations), [state.persons, state.relations]);
-  const bounds = useMemo(() => sceneBounds(positions), [positions]);
+  // Placement automatique + cases déplacées à la main (option « Déplacer les cases »).
+  const [moveMode, setMoveMode] = useState(false);
+  const [dragPos, setDragPos] = useState<Record<string, TreePoint>>({});
+  useEffect(() => { if (!canEdit) setMoveMode(false); }, [canEdit]);
+  const autoPositions = useMemo(() => layoutTree(state.persons, state.relations), [state.persons, state.relations]);
+  const positions = useMemo(() => {
+    const map = new Map(autoPositions);
+    for (const [id, point] of Object.entries(state.moved ?? {})) if (map.has(id)) map.set(id, point);
+    return map;
+  }, [autoPositions, state.moved]);
+  const bounds = useMemo(() => sceneBounds(autoPositions), [autoPositions]); // le cadrage ne saute pas quand on déplace
+  const allBounds = useMemo(() => sceneBounds(positions), [positions]);
+  const hasMoved = Object.keys(state.moved ?? {}).some(id => positions.has(id));
   const nodes = useMemo<Node[]>(() => {
     return state.persons.map((person) => {
         const firstRelation = state.relations.find(
@@ -1671,7 +1683,7 @@ function Dashboard({
         return {
           id: person.id,
           type: "person",
-          position: positions.get(person.id)! ,
+          position: dragPos[person.id] ?? positions.get(person.id)!,
           data: {
             person,
             canEdit,
@@ -1692,6 +1704,7 @@ function Dashboard({
     state.persons,
     state.relations,
     positions,
+    dragPos,
     canEdit,
     clanFilter,
     focusedIds,
@@ -1888,6 +1901,8 @@ function Dashboard({
             {canEdit ? <LockKeyhole size={16}/> : <Eye size={16}/>}
             <span>{canEdit ? (cloud ? "Terminer" : "Édition · Verrouiller") : cloud ? "Modifier cet arbre" : "Lecture seule · Déverrouiller"}</span>
           </button>
+          {canEdit && <button className={`mode-button ${moveMode ? "is-editor" : ""}`} aria-pressed={moveMode} onClick={() => { setMoveMode(value => !value); if (!moveMode) showToast("Glisse les cases pour les déplacer"); }}><span>{moveMode ? "Fin du déplacement" : "Déplacer les cases"}</span></button>}
+          {canEdit && moveMode && hasMoved && <button className="mode-button" onClick={() => setState(current => ({ ...current, moved: undefined }))}><span>Remettre en auto</span></button>}
           {canEdit && cloud && <button className="mode-button" onClick={() => setImportOpen(true)}><span>Importer des persos</span></button>}
           {canEdit && cloud && <button className="mode-button danger" aria-label="Supprimer cet arbre" onClick={() => { if (window.confirm(`Supprimer définitivement l’arbre « ${cloud.current} » ?`)) cloud.onDelete().catch(error => showToast(error instanceof Error ? error.message : "Erreur")); }}><TrashIcon size={16}/><span>Supprimer</span></button>}
           {canEdit && <button
@@ -2054,7 +2069,16 @@ function Dashboard({
                 minZoom={0.08}
                 maxZoom={2}
 
-                nodesDraggable={false}
+                nodesDraggable={canEdit && moveMode && !aura}
+                onNodesChange={(changes) => {
+                  const moves = changes.flatMap(change => change.type === "position" && change.position ? [[change.id, change.position] as const] : []);
+                  if (moves.length) setDragPos(current => ({ ...current, ...Object.fromEntries(moves) }));
+                }}
+                onNodeDragStop={(_, node) => {
+                  const point = { x: Math.round(node.position.x), y: Math.round(node.position.y) };
+                  setState(current => ({ ...current, moved: { ...current.moved, [node.id]: point } }));
+                  setDragPos({});
+                }}
                 nodesConnectable={false}
                 elementsSelectable
                 panOnScroll
@@ -2088,7 +2112,7 @@ function Dashboard({
                 />}
                 <TreeControls
                   primaryPersonId={state.primaryPersonId}
-                  bounds={bounds}
+                  bounds={allBounds}
                 />
               </ReactFlow>
 

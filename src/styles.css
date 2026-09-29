@@ -2890,3 +2890,7 @@ button:disabled {
 .relation-badge-compact .relation-text { display: none; }
 .relation-badge-compact:hover, .relation-badge-compact:focus-visible { width: auto !important; padding: 7px 10px; gap: 6px; z-index: 30; }
 .relation-badge-compact:hover .relation-text, .relation-badge-compact:focus-visible .relation-text { display: inline; }
+
+/* Poignée pour replacer un lien (mode déplacement) */
+.link-handle { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #dec298; border: 2px solid #0a0d13; box-shadow: 0 0 0 2px #dec298, 0 0 14px rgba(222, 194, 152, .6); cursor: ns-resize; pointer-events: all; touch-action: none; z-index: 40; }
+.link-handle:hover { background: #fff0d4; }

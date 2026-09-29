@@ -113,6 +113,7 @@ type PersistedState = {
   relations: Relation[];
   primaryPersonId?: string;
   moved?: Record<string, TreePoint>; // cases déplacées à la main (position absolue)
+  linkShift?: Record<string, number>; // liens replacés à la main (décalage vertical en px)
 };
 
 type CloudProps = {
@@ -1671,7 +1672,7 @@ function Dashboard({
   }, [autoPositions, state.moved]);
   const bounds = useMemo(() => sceneBounds(autoPositions), [autoPositions]); // le cadrage ne saute pas quand on déplace
   const allBounds = useMemo(() => sceneBounds(positions), [positions]);
-  const hasMoved = Object.keys(state.moved ?? {}).some(id => positions.has(id));
+  const hasMoved = Object.keys(state.moved ?? {}).some(id => positions.has(id)) || Object.keys(state.linkShift ?? {}).length > 0;
   const nodes = useMemo<Node[]>(() => {
     return state.persons.map((person) => {
         const firstRelation = state.relations.find(
@@ -1729,12 +1730,15 @@ function Dashboard({
         data: { kind: relation.type, side, sideY: (positions.get(relation.personA)?.y ?? 0) + CARD_HEIGHT / 2, labelPosition:labelPositions.get(relation.id), color:getRelationColor(relation.type,state.relationColors), lane: state.relations.findIndex(item=>item.id===relation.id) % 3,
           dimmed: !!focusId && relation.personA !== focusId && relation.personB !== focusId,
           showText: !!focusId && (relation.personA === focusId || relation.personB === focusId),
+          shift: state.linkShift?.[relation.id],
+          editable: canEdit && moveMode && !aura,
+          onShift: (relationId: string, value: number) => setState(current => ({ ...current, linkShift: { ...current.linkShift, [relationId]: value } })),
           description: `${nameA} — ${appearance.label} — ${nameB}`,
           onInspect: () => { setFocusId(relation.personA); setSelectedId(relation.personA); },
         },
         markerEnd: isParent ? { type: MarkerType.ArrowClosed, color: getRelationColor(relation.type,state.relationColors), width: 16, height: 16 } : undefined,
       };
-    }), [state.relations, state.persons, state.relationColors, focusId, visibleRelations, labelPositions, positions]);
+    }), [state.relations, state.persons, state.relationColors, state.linkShift, focusId, visibleRelations, labelPositions, positions, canEdit, moveMode, aura]);
 
   const selectedPerson = state.persons.find(
     (person) => person.id === selectedId,
@@ -1902,8 +1906,8 @@ function Dashboard({
             {canEdit ? <LockKeyhole size={16}/> : <Eye size={16}/>}
             <span>{canEdit ? (cloud ? "Terminer" : "Édition · Verrouiller") : cloud ? "Modifier cet arbre" : "Lecture seule · Déverrouiller"}</span>
           </button>
-          {canEdit && <button className={`mode-button ${moveMode ? "is-editor" : ""}`} aria-pressed={moveMode} onClick={() => { setMoveMode(value => !value); if (!moveMode) showToast("Glisse les cases pour les déplacer"); }}><span>{moveMode ? "Fin du déplacement" : "Déplacer les cases"}</span></button>}
-          {canEdit && moveMode && hasMoved && <button className="mode-button" onClick={() => setState(current => ({ ...current, moved: undefined }))}><span>Remettre en auto</span></button>}
+          {canEdit && <button className={`mode-button ${moveMode ? "is-editor" : ""}`} aria-pressed={moveMode} onClick={() => { setMoveMode(value => !value); if (!moveMode) showToast("Glisse les cases, et les ronds dorés sur les liens pour les replacer"); }}><span>{moveMode ? "Fin du déplacement" : "Déplacer cases et liens"}</span></button>}
+          {canEdit && moveMode && hasMoved && <button className="mode-button" onClick={() => setState(current => ({ ...current, moved: undefined, linkShift: undefined }))}><span>Remettre en auto</span></button>}
           {canEdit && cloud && <button className="mode-button" onClick={() => setImportOpen(true)}><span>Importer des persos</span></button>}
           {canEdit && cloud && <button className="mode-button danger" aria-label="Supprimer cet arbre" onClick={() => { if (window.confirm(`Supprimer définitivement l’arbre « ${cloud.current} » ?`)) cloud.onDelete().catch(error => showToast(error instanceof Error ? error.message : "Erreur")); }}><TrashIcon size={16}/><span>Supprimer</span></button>}
           {canEdit && <button

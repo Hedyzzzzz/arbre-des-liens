@@ -1728,6 +1728,7 @@ function Dashboard({
         targetHandle: side ? (aIsLeft ? "side-left-target" : "side-right-target") : isParent ? "parent-target" : `${relation.type}-target`,
         data: { kind: relation.type, side, sideY: (positions.get(relation.personA)?.y ?? 0) + CARD_HEIGHT / 2, labelPosition:labelPositions.get(relation.id), color:getRelationColor(relation.type,state.relationColors), lane: state.relations.findIndex(item=>item.id===relation.id) % 3,
           dimmed: !!focusId && relation.personA !== focusId && relation.personB !== focusId,
+          showText: !!focusId && (relation.personA === focusId || relation.personB === focusId),
           description: `${nameA} — ${appearance.label} — ${nameB}`,
           onInspect: () => { setFocusId(relation.personA); setSelectedId(relation.personA); },
         },

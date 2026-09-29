@@ -1,8 +1,8 @@
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, getStraightPath, type EdgeProps } from '@xyflow/react';
-import { LABEL_WIDTHS, LABEL_HEIGHT, SIDE_LABEL_WIDTH } from './relationLabels';
+import { LABEL_WIDTHS, FULL_LABEL_WIDTHS, LABEL_HEIGHT, SIDE_LABEL_WIDTH } from './relationLabels';
 import { RELATION_STYLES, type RelationKind } from './relations';
 
-type LinkData = { side?: boolean; sideY?: number; labelPosition?: { x:number; y:number }; color: string; kind: RelationKind; lane: number; dimmed: boolean; description: string; onInspect: () => void };
+type LinkData = { side?: boolean; sideY?: number; labelPosition?: { x:number; y:number }; color: string; kind: RelationKind; lane: number; dimmed: boolean; showText?: boolean; description: string; onInspect: () => void };
 export function FamilyEdge(props: EdgeProps) {
   const { id, sourceX: sx, sourceY: sy, targetX: tx, targetY: ty, sourcePosition, targetPosition, markerEnd } = props;
   const data = props.data as LinkData;
@@ -31,9 +31,9 @@ export function FamilyEdge(props: EdgeProps) {
       <circle cx={x} cy={y} r="3" fill={data.color}/>
     </g>}
     <EdgeLabelRenderer>
-      <button className={`relation-badge relation-${data.kind}${data.side?' relation-badge-side':''} nodrag nopan`} title={data.description} aria-label={data.description}
-        onClick={data.onInspect} style={{transform:`translate(-50%, -50%) translate(${label.x}px,${label.y}px)`,width:data.side?SIDE_LABEL_WIDTH:LABEL_WIDTHS[data.kind],height:LABEL_HEIGHT,justifyContent:"center",borderColor:data.color,color:"#edf1f7",opacity:data.dimmed ? .2 : 1}}>
-        <b aria-hidden="true" style={{color:data.color}}>{appearance.symbol}</b>{!data.side && appearance.label}
+      <button className={`relation-badge relation-${data.kind}${data.side?' relation-badge-side':''}${!data.side&&!data.showText?' relation-badge-compact':''} nodrag nopan`} title={data.description} aria-label={data.description}
+        onClick={data.onInspect} style={{transform:`translate(-50%, -50%) translate(${label.x}px,${label.y}px)`,width:data.side?SIDE_LABEL_WIDTH:data.showText?FULL_LABEL_WIDTHS[data.kind]:LABEL_WIDTHS[data.kind],height:LABEL_HEIGHT,justifyContent:"center",borderColor:data.color,color:"#edf1f7",opacity:data.dimmed ? .2 : 1}}>
+        <b aria-hidden="true" style={{color:data.color}}>{appearance.symbol}</b>{!data.side && <span className={data.showText ? undefined : 'relation-text'}>{appearance.label}</span>}
       </button>
     </EdgeLabelRenderer>
   </g>;

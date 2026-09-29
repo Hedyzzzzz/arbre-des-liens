@@ -1,6 +1,8 @@
 import { CARD_WIDTH, CARD_HEIGHT, type Point } from './treeGeometry.ts';
 import type { RelationKind } from './relations.ts';
-export const LABEL_WIDTHS: Record<RelationKind, number> = { parent: 164, sibling: 142, partner: 108 };
+// Pastilles compactes (symbole seul) par défaut ; le texte complet apparaît au survol ou quand le personnage est sélectionné.
+export const LABEL_WIDTHS: Record<RelationKind, number> = { parent: 34, sibling: 34, partner: 34 };
+export const FULL_LABEL_WIDTHS: Record<RelationKind, number> = { parent: 164, sibling: 142, partner: 108 };
 export const LABEL_HEIGHT = 34;
 // Badge réduit (symbole seul) posé dans l'espace entre deux cartes voisines.
 export const SIDE_LABEL_WIDTH = 34;

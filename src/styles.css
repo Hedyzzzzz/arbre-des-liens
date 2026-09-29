@@ -2884,3 +2884,9 @@ button:disabled {
 .lin-tile-main strong { font: 500 21px Georgia, serif; } .lin-tile-main span { color: #d9b888; font-size: 14px; } .lin-tile-main small { color: #8d897f; }
 .lin-tile-delete { padding: 7px; cursor: pointer; color: #ff8f8f; font-size: 13px; background: none; border: 1px solid rgba(255, 120, 120, .3); border-radius: 8px; } .lin-tile-delete:hover { background: rgba(255, 120, 120, .12); }
 .home-version { z-index: 5; }
+
+/* Étiquettes de lien compactes : symbole seul, texte au survol */
+.relation-badge-compact { padding: 0; gap: 0; }
+.relation-badge-compact .relation-text { display: none; }
+.relation-badge-compact:hover, .relation-badge-compact:focus-visible { width: auto !important; padding: 7px 10px; gap: 6px; z-index: 30; }
+.relation-badge-compact:hover .relation-text, .relation-badge-compact:focus-visible .relation-text { display: inline; }
